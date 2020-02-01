@@ -52,8 +52,8 @@ public class FPSCharacterMovement : MonoBehaviour
 
     void movePlayer()
     {
-        playerObject.transform.Translate(Camera.main.transform.forward.x * Input.GetAxisRaw("Player1UD") * sensitivity / 100, 0, Camera.main.transform.forward.z * Input.GetAxisRaw("Player1UD") * sensitivity / 100); //avoids getting y component of the vector so there's no weird floaty shit
-        playerObject.transform.Translate(Camera.main.transform.right * Input.GetAxisRaw("Player1LR") * sensitivity / 100);
+        playerObject.transform.Translate(transform.forward.x * Input.GetAxisRaw("Player1UD") * sensitivity / 100, 0, transform.forward.z * Input.GetAxisRaw("Player1UD") * sensitivity / 100); //avoids getting y component of the vector so there's no weird floaty shit
+        playerObject.transform.Translate(transform.right * Input.GetAxisRaw("Player1LR") * sensitivity / 100);
         if (Input.GetButtonDown("Player1Jump") && isGrounded())
         {
             playerObject.transform.GetComponent<Rigidbody>().AddForce(0, jumpHeight * 25, 0);
