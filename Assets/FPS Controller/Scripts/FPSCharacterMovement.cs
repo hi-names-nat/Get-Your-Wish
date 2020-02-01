@@ -36,9 +36,7 @@ public class FPSCharacterMovement : MonoBehaviour
     {
         moveCamera();
         movePlayer();
-        isGrounded();
     }
-
 
     void moveCamera()
     {
@@ -46,19 +44,18 @@ public class FPSCharacterMovement : MonoBehaviour
         currentRotation.y -= Input.GetAxis("Mouse Y") * sensitivity;
         currentRotation.x = Mathf.Repeat(currentRotation.x, 360);
         currentRotation.y = Mathf.Clamp(currentRotation.y, -maxYAngle, maxYAngle);
-        Camera.main.transform.rotation = Quaternion.Euler(currentRotation.y, currentRotation.x, 0);
-
+        transform.rotation = Quaternion.Euler(currentRotation.y, currentRotation.x, 0);
     }
 
     void movePlayer()
     {
         playerObject.transform.Translate(transform.forward.x * Input.GetAxisRaw("Player1UD") * sensitivity / 100, 0, transform.forward.z * Input.GetAxisRaw("Player1UD") * sensitivity / 100); //avoids getting y component of the vector so there's no weird floaty shit
+        //playerObject.transform.Translate(Mathf.Abs(Mathf.Cos(transform.rotation.y))* transform.forward.x * Input.GetAxisRaw("Player1UD") * sensitivity / 100, 0, Mathf.Abs(Mathf.Cos(transform.rotation.y)) * transform.forward.z * Input.GetAxisRaw("Player1UD") * sensitivity / 100); //avoids getting y component of the vector so there's no weird floaty shit
         playerObject.transform.Translate(transform.right * Input.GetAxisRaw("Player1LR") * sensitivity / 100);
         if (Input.GetButtonDown("Player1Jump") && isGrounded())
         {
             playerObject.transform.GetComponent<Rigidbody>().AddForce(0, jumpHeight * 25, 0);
         }
-
     }
 
     bool isGrounded()
@@ -70,4 +67,5 @@ public class FPSCharacterMovement : MonoBehaviour
         }
         return (false);
     }
+
 }
