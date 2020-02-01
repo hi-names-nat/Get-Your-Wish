@@ -1,6 +1,6 @@
 ﻿/**
  * 
- * USAGE: Place this script onto the main camera. Make the main camera the child of a capsule collider.
+ * USAGE: Place this script onto the player object. place the Cameramovement sister script onto a camera childed to the playerobject
  * Desc: basic FPS controller.
  * Author: Dani/Natalie Soltis, whatever I go by at the time :P
  * Other: Sean sux lol
@@ -24,34 +24,32 @@ public class FPSCharacterMovement : MonoBehaviour
     public float maxYAngle = 90f;
     [Tooltip("Height the player can jump")]
     public float jumpHeight = 10f;
+    private Vector2 cameraRot;
+
     private GameObject playerObject;
+    private GameObject cameraObject;
 
     private void Start()
     {
-        playerObject = transform.parent.gameObject;
+        playerObject = transform.gameObject;
+        cameraObject = transform.GetChild(0).gameObject;
     }
 
     // Update is called once per frame
     void Update()
     {
-        moveCamera();
+        MoveCamera();
         movePlayer();
-    }
-
-    void moveCamera()
-    {
-        currentRotation.x += Input.GetAxis("Mouse X") * sensitivity;
-        currentRotation.y -= Input.GetAxis("Mouse Y") * sensitivity;
-        currentRotation.x = Mathf.Repeat(currentRotation.x, 360);
-        currentRotation.y = Mathf.Clamp(currentRotation.y, -maxYAngle, maxYAngle);
-        transform.rotation = Quaternion.Euler(currentRotation.y, currentRotation.x, 0);
     }
 
     void movePlayer()
     {
-        playerObject.transform.Translate(transform.forward.x * Input.GetAxisRaw("Player1UD") * sensitivity / 100, 0, transform.forward.z * Input.GetAxisRaw("Player1UD") * sensitivity / 100); //avoids getting y component of the vector so there's no weird floaty shit
-        //playerObject.transform.Translate(Mathf.Abs(Mathf.Cos(transform.rotation.y))* transform.forward.x * Input.GetAxisRaw("Player1UD") * sensitivity / 100, 0, Mathf.Abs(Mathf.Cos(transform.rotation.y)) * transform.forward.z * Input.GetAxisRaw("Player1UD") * sensitivity / 100); //avoids getting y component of the vector so there's no weird floaty shit
-        playerObject.transform.Translate(transform.right * Input.GetAxisRaw("Player1LR") * sensitivity / 100);
+        //moves the player 
+        currentRotation.y += Input.GetAxis("Mouse X") * sensitivity;
+        currentRotation.y = Mathf.Repeat(currentRotation.y, 360);
+        transform.rotation = Quaternion.Euler(0, currentRotation.y, 0);
+        playerObject.transform.Translate(transform.worldToLocalMatrix.MultiplyVector(transform.forward) * Input.GetAxisRaw("Player1UD") * sensitivity / 500);
+        playerObject.transform.Translate(transform.worldToLocalMatrix.MultiplyVector(transform.right) * Input.GetAxisRaw("Player1LR") * sensitivity / 500);
         if (Input.GetButtonDown("Player1Jump") && isGrounded())
         {
             playerObject.transform.GetComponent<Rigidbody>().AddForce(0, jumpHeight * 25, 0);
@@ -66,6 +64,17 @@ public class FPSCharacterMovement : MonoBehaviour
             return (true);
         }
         return (false);
+    }
+
+    void MoveCamera()
+    {
+        //manipulates the child camera to sync with the y value of the parent.
+        cameraRot.x -= Input.GetAxis("Mouse Y") * sensitivity;
+
+        //clamps the y rotation of the camera from -maxYangle to maxYangle to prevent dumb stuff
+        cameraRot.x = Mathf.Clamp(cameraRot.x, -maxYAngle, maxYAngle);
+
+        cameraObject.transform.localRotation = Quaternion.Euler(cameraRot.x, 0, 0);
     }
 
 }
