@@ -17,19 +17,23 @@ public class TriggerDetect : MonoBehaviour
         if (!c.isTrigger) {
             throw new System.Exception("Collider must be a trigger!");
         }
+        StartCoroutine("waitandDestroy");
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject  == check) {
             triggered = true;
+            print("triggered");
         }
     }
 
-    private void OnTriggerExit(Collider other) {
-
-        if (other.gameObject == check) {
-            triggered = false;
+    IEnumerator waitandDestroy()
+    {
+        while (triggered != true)
+        {
+            yield return null;
         }
+        Destroy(this.gameObject);
     }
 }

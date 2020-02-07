@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class Bilboard : MonoBehaviour
 {
+    public GameObject player;
+
     // Update is called once per frame
     void Update()
     {
-        transform.rotation = GameObject.FindGameObjectWithTag("Player").transform.rotation;
+        //write if u have the time
     }
 }
