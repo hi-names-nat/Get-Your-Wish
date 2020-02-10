@@ -1,6 +1,6 @@
 ﻿/**
  * 
- * USAGE: Place this script onto the player object. place the Cameramovement sister script onto a camera childed to the playerobject
+ * USAGE: Place this script onto the player object with the camera childed to it. Ensure there is a capsule collider on the parent gameobject.
  * Desc: basic FPS controller.
  * Author: Dani/Natalie Soltis, whatever I go by at the time :P
  * Other: Sean sux lol
@@ -19,13 +19,15 @@ public class FPSCharacterMovement : MonoBehaviour
     public float sensitivity = 10f;
     [Tooltip("The player's speed")]
     public float playerSpeed = 15f;
-    private Vector2 currentRotation;
     [Tooltip("The angle the player can look up/down")]
     public float maxYAngle = 90f;
     [Tooltip("Height the player can jump")]
     public float jumpHeight = 10f;
-    private Vector2 cameraRot;
 
+
+    //private.
+    private Vector2 currentRotation;
+    private Vector2 cameraRot;
     private GameObject playerObject;
     private GameObject cameraObject;
 
