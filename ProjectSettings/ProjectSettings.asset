@@ -579,11 +579,15 @@ PlayerSettings:
   webGLLinkerTarget: 1
   webGLThreadsSupport: 0
   webGLWasmStreaming: 0
-  scriptingDefineSymbols: {1: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59,
-    7: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59, 13: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59,
-    19: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59, 21: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59,
-    25: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59, 28: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59,
-    29: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59}
+  scriptingDefineSymbols:
+    1: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59
+    7: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59
+    13: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59
+    19: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59
+    21: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59
+    25: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59
+    28: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59
+    29: RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_5;RealtimeCSG_1_5_59
   platformArchitecture: {}
   scriptingBackend: {}
   il2cppCompilerConfiguration: {}
