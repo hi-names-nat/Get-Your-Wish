@@ -10447,7 +10447,7 @@ GameObject:
   - component: {fileID: 1646289917}
   - component: {fileID: 1646289916}
   m_Layer: 0
-  m_Name: Camera
+  m_Name: OS Cam
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10470,8 +10470,8 @@ Camera:
   m_GameObject: {fileID: 1646289915}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.25610182, g: 0.1439124, b: 0.3962264, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -11934,6 +11934,11 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 5902419001559106108, guid: 5b4171920d2c98e499a0fc4c86c8125a,
+        type: 3}
+      propertyPath: m_Materials.Array.data[1]
+      value: 
+      objectReference: {fileID: 2100000, guid: bbd62fcf2ed3577488951d9fb8e1b099, type: 2}
     - target: {fileID: 6292535884062368016, guid: 5b4171920d2c98e499a0fc4c86c8125a,
         type: 3}
       propertyPath: m_Layer
@@ -12881,19 +12886,19 @@ MonoBehaviour:
   m_Text: '[1/29/04 16:27:31] from @[localclient]: oh hey @[uid7e2], nice 2 see u
     again
 
-    [1/29/04 16:27:38] from @[uid7e2]: hi @[localclient], nice 2 see
-    u 2 :)
+    [1/29/04 16:27:38] from @[uid7e2]: hi @[localclient], nice 2 see u
+    2 :)
 
-    [1/29/04 16:27:42] from @[uid7e2]: howve u been doing? i havent
-    talked 2 u since u told me abt the irc chat, hows that goin???
+    [1/29/04 16:27:42] from @[uid7e2]: howve u been doing? i havent talked
+    2 u since u told me abt the irc chat, hows that goin???
 
-    [1/29/04
-    16:27:48] from @[localclient]: decently, im still thinking about which software,
-    ive been thinking abt either ts or vent, i cant decide which, n i dont have the
-    money rn to pay for it
+    [1/29/04 16:27:48]
+    from @[localclient]: decently, im still thinking about which software, ive been
+    thinking abt either ts or vent, i cant decide which, n i dont have the money
+    rn to pay for it
 
-    [1/29/04 16:27:55] from @[uid7e2]: haha, take ur
-    time, but i cant wait until i have a way 2 talk 2 u w/o joining the server
+    [1/29/04 16:27:55] from @[uid7e2]: haha, take ur time,
+    but i cant wait until i have a way 2 talk 2 u w/o joining the server
 
     [1/29/04
     16:28:05] from @[localclient]: ooh, sounds like somebody has a crush
