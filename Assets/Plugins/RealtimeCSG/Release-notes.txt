@@ -1,5 +1,20 @@
 Source code can be found at https://github.com/LogicalError/realtime-CSG-for-unity
 
+Version 1.562
+- Fix Pack Margin having the wrong value
+- Fix selection picks invisible surfaces (bug #312)
+
+Version 1.561
+- Fixed not being able to select triggers
+- Fixed "Do Not Render" not checked, and Trigger checked, would not render
+- Default Unity Lightmap UV's do not work well, replaced them with more usable defaults
+
+Version 1.560
+- Fixed unity error spamming bug due to unity sub-version behavior changes
+- Fixed issue w/ mesh container being coupled with wrong model
+- Fixed models being destroyed in scene w/ rebuild in prefab
+- Fixed wireframe mode not turning off
+
 Version 1.559 - 31 Jan 2020
 - Fixed lightmap UV generation
 - Removed evaluation version specific code

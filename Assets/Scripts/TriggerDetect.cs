@@ -1,39 +1,30 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
+[RequireComponent(typeof(Collider))]
 public class TriggerDetect : MonoBehaviour
 {
     private Collider c;
-    public GameObject check;
 
-    [System.NonSerialized]
-    public bool triggered = false;
+    public UnityEvent onTriggered;
 
-    // Start is called before the first frame update
     void Start()
     {
         c = GetComponent<Collider>();
         if (!c.isTrigger) {
-            throw new System.Exception("Collider must be a trigger!");
+            Debug.LogWarning("Collider was not trigger! Fixing...");
+            c.isTrigger = true;
         }
-        StartCoroutine("waitandDestroy");
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject  == check) {
-            triggered = true;
+        if (other.tag == "Player") {
+            onTriggered.Invoke();
             print("triggered");
+            Destroy(this.gameObject);
         }
-    }
-
-    IEnumerator waitandDestroy()
-    {
-        while (triggered != true)
-        {
-            yield return null;
-        }
-        Destroy(this.gameObject);
     }
 }

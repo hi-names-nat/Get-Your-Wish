@@ -8,6 +8,9 @@ using RealtimeCSG;
 using RealtimeCSG.Foundation;
 using RealtimeCSG.Components;
 using UnityEditor.SceneManagement;
+#if UNITY_2018_3_OR_NEWER
+using UnityEditor.Experimental.SceneManagement;
+#endif
 
 namespace InternalRealtimeCSG
 {
@@ -165,8 +168,15 @@ namespace InternalRealtimeCSG
 
 			if (validateGeneratedMeshes.Count > 0)
 			{
-				foreach (var generatedMeshes in validateGeneratedMeshes)
-					ValidateGeneratedMeshesNow(generatedMeshes);
+                foreach (var generatedMeshes in validateGeneratedMeshes)
+                {
+                    var prevModel = generatedMeshes ? generatedMeshes.owner : null;
+                    if (ValidateGeneratedMeshesNow(generatedMeshes))
+                    {
+                        if (prevModel)
+                            prevModel.forceUpdate = true;
+                    }
+                }
 				validateGeneratedMeshes.Clear();
 			}
 
@@ -211,12 +221,16 @@ namespace InternalRealtimeCSG
 
 		static GeneratedMeshes EnsureOneValidGeneratedMeshesComponent(CSGModel model)
 		{
+            if (!model.isActiveAndEnabled)
+                return null;
+
 			// Find all the GeneratedMeshes inside this model
 			var foundGeneratedMeshes = model.GetComponentsInChildren<GeneratedMeshes>(true);
 			// If we have CSGModel components inside this CSGModel component, we ignore all the GeneratedMeshes inside those ..
 			for (var i = foundGeneratedMeshes.Length - 1; i >= 0; i--)
 			{
-				var parentModel = foundGeneratedMeshes[i].GetComponentInParent<CSGModel>();
+                var models = foundGeneratedMeshes[i].GetComponentsInParent<CSGModel>(includeInactive: true);
+                var parentModel = models.Length == 0 ? null : models[0];
 				if (parentModel != model)
 				{
 					// TODO: should just swap with last element + keep track of our own count in array and use that below
@@ -281,7 +295,8 @@ namespace InternalRealtimeCSG
 				{
 					model.generatedMeshes.owner = model;
 					UpdateGeneratedMeshesFlags(model, model.generatedMeshes);
-					ValidateGeneratedMeshesNow(model.generatedMeshes, skipSiblingCheck: true);
+                    if (ValidateGeneratedMeshesNow(model.generatedMeshes, skipSiblingCheck: true) && model)
+                        model.forceUpdate = true;
 					return model.generatedMeshes;
 				}
 
@@ -292,7 +307,8 @@ namespace InternalRealtimeCSG
 				model.generatedMeshes = foundGeneratedMeshes[0];
 				model.generatedMeshes.owner = model;
 				UpdateGeneratedMeshesFlags(model, model.generatedMeshes);
-				ValidateGeneratedMeshesNow(model.generatedMeshes, skipSiblingCheck: true);
+                if (ValidateGeneratedMeshesNow(model.generatedMeshes, skipSiblingCheck: true) && model)
+                    model.forceUpdate = true;
 				return model.generatedMeshes;
 			}
 
@@ -326,7 +342,8 @@ namespace InternalRealtimeCSG
 				model.generatedMeshes.owner == model)
 				return true;
 
-            if (!ModelTraits.IsModelEditable(model))
+            if (!ModelTraits.IsModelEditable(model) ||
+                !model.isActiveAndEnabled)
                 return false;
 
 			EnsureOneValidGeneratedMeshesComponent(model);
@@ -383,18 +400,8 @@ namespace InternalRealtimeCSG
                     meshInstance.RenderSurfaceType != RenderSurfaceType.Hidden;
 		}
 
-		public static void RenderHelperSurfaces(SceneView sceneView)
+		public static void UpdateHelperSurfaces()
 		{
-			var allHelperSurfaces = (CSGSettings.VisibleHelperSurfaces & ~HelperSurfaceFlags.ShowVisibleSurfaces);
-			if (allHelperSurfaces == (HelperSurfaceFlags)0)
-			{
-				CSGSettings.VisibleHelperSurfaces = CSGSettings.DefaultHelperSurfaceFlags;
-				return;
-			}
-
-			var camera			= sceneView.camera;			
-			var showWireframe	= RealtimeCSG.CSGSettings.IsWireframeShown(sceneView);
-				
 			var models			= InternalCSGModelManager.Models;
 			for (var i = 0; i < models.Length; i++)
 			{
@@ -403,7 +410,8 @@ namespace InternalRealtimeCSG
 					continue;
 
 				var container = model.generatedMeshes;
-                if (container.owner != model)
+                if (container.owner != model ||
+					!container.gameObject)
                     continue;
 
 				if (!model.generatedMeshes)
@@ -426,28 +434,31 @@ namespace InternalRealtimeCSG
 				}
 
 
-				//var modelDoesNotRender = !model.IsRenderable;
-				
-				var matrix = container.transform.localToWorldMatrix;
-				foreach (var meshInstance in container.HelperSurfaces)
+				foreach (var helperSurface in container.HelperSurfaces)
 				{
-					var renderSurfaceType = meshInstance.RenderSurfaceType;
+					var renderSurfaceType = helperSurface.RenderSurfaceType;
 
-					if (!ShouldRenderHelperSurface(renderSurfaceType))
-						continue;
-
-					var material = MaterialUtility.GetSurfaceMaterial(renderSurfaceType);
-					if (!material)
-						continue;
-
-                    if (!meshInstance.SharedMesh)
-                        continue;
-
-                    if (!meshInstance.HasGeneratedNormals)
+					if (!helperSurface.SharedMesh ||
+						helperSurface.SharedMesh.vertexCount == 0 ||
+						!ShouldRenderHelperSurface(renderSurfaceType))
 					{
-						meshInstance.SharedMesh.RecalculateNormals();
-						meshInstance.HasGeneratedNormals = true;
+						if (helperSurface.GameObject)
+							helperSurface.GameObject.SetActive(false);
+						continue;
 					}
+
+					if (!helperSurface.GameObject || !helperSurface.MeshFilter || !helperSurface.MeshRenderer ||
+						helperSurface.MeshFilter.sharedMesh != helperSurface.SharedMesh)
+						MeshInstanceManager.UpdateHelperSurfaceGameObject(container, helperSurface);
+
+                    if (!helperSurface.HasGeneratedNormals)
+					{
+						helperSurface.SharedMesh.RecalculateNormals();
+						helperSurface.HasGeneratedNormals = true;
+					}
+
+					helperSurface.GameObject.SetActive(true);
+					/*
 
 					if (!showWireframe)
 					{
@@ -466,7 +477,7 @@ namespace InternalRealtimeCSG
 										  properties: null,
 										  castShadows: false,
 										  receiveShadows: false);
-					}
+					}*/
 				}
 			}
 		}
@@ -497,7 +508,28 @@ namespace InternalRealtimeCSG
 			return renderers.ToArray();
 		}
 
-		internal static void Reset()
+        internal static void ResetScene(Scene scene)
+        {
+			var meshInstances = SceneQueryUtility.GetAllComponentsInScene<GeneratedMeshInstance>(scene);
+			for (int m = 0; m < meshInstances.Count; m++)
+            {
+                if (!meshInstances[m])
+                    continue;
+
+                var meshInstanceTransform = meshInstances[m].transform;
+                var modelTransform = meshInstanceTransform ? meshInstanceTransform.parent ? meshInstanceTransform.parent.parent : null : null;
+                var model = modelTransform ? modelTransform.GetComponent<CSGModel>() : null;
+                if (model && !ModelTraits.IsModelEditable(model))
+                    continue;
+                model.generatedMeshes = null;
+                meshInstances[m].hideFlags = HideFlags.None;
+				var gameObject = meshInstances[m].gameObject;
+                GameObjectExtensions.SanitizeGameObject(gameObject);
+                GameObjectExtensions.TryDestroy(gameObject);
+			}
+        }
+
+        internal static void Reset()
 		{
 			if (UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
 				return;
@@ -507,17 +539,17 @@ namespace InternalRealtimeCSG
 				var scene = SceneManager.GetSceneAt(sceneIndex);
 				if (!scene.isLoaded)
 					continue;
+                ResetScene(scene);
+            }
 
-				var meshInstances = SceneQueryUtility.GetAllComponentsInScene<GeneratedMeshInstance>(scene);
-				for (int m = 0; m < meshInstances.Count; m++)
-				{
-					meshInstances[m].hideFlags = HideFlags.None;
-					var gameObject = meshInstances[m].gameObject;
-                    GameObjectExtensions.SanitizeGameObject(gameObject);
-                    GameObjectExtensions.TryDestroy(gameObject);
-				}
-			}
-		}
+#if UNITY_2018_4_OR_NEWER
+            if (CSGPrefabUtility.AreInPrefabMode())
+            {
+                var currentPrefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+                ResetScene(currentPrefabStage.scene);
+            }
+#endif
+        }
 
 		public static RenderSurfaceType GetSurfaceType(GeneratedMeshDescription meshDescription, ModelSettingsFlags modelSettings)
 		{
@@ -692,6 +724,32 @@ namespace InternalRealtimeCSG
 
 			Initialize(generatedMeshes, meshInstance);
             return meshInstance;
+		}
+
+		public static void UpdateHelperSurfaceGameObject(GeneratedMeshes container, HelperSurfaceDescription helperSurfaceDescription)
+        {
+			if (!helperSurfaceDescription.GameObject ||
+				!helperSurfaceDescription.MeshFilter ||
+				!helperSurfaceDescription.MeshRenderer)
+			{ 
+				if (helperSurfaceDescription.GameObject) GameObjectExtensions.Destroy(helperSurfaceDescription.GameObject);
+
+				helperSurfaceDescription.GameObject = new GameObject(HelperMeshInstanceName);
+				helperSurfaceDescription.GameObject.SetActive(false);
+				helperSurfaceDescription.GameObject.transform.SetParent(container.transform, true);
+				helperSurfaceDescription.GameObject.transform.localPosition = Vector3.zero;
+				helperSurfaceDescription.GameObject.transform.localRotation = Quaternion.identity;
+				helperSurfaceDescription.GameObject.transform.localScale = Vector3.one;
+				helperSurfaceDescription.GameObject.hideFlags = HideFlags.DontSave;
+				helperSurfaceDescription.MeshFilter		= helperSurfaceDescription.GameObject.AddComponent<MeshFilter>();
+				helperSurfaceDescription.MeshRenderer	= helperSurfaceDescription.GameObject.AddComponent<MeshRenderer>();
+			}
+			if (helperSurfaceDescription.MeshFilter.sharedMesh != helperSurfaceDescription.SharedMesh)
+				helperSurfaceDescription.MeshFilter.sharedMesh = helperSurfaceDescription.SharedMesh;
+
+			var sharedMaterial = MaterialUtility.GetSurfaceMaterial(helperSurfaceDescription.RenderSurfaceType);
+			if (helperSurfaceDescription.MeshRenderer.sharedMaterial != sharedMaterial)
+				helperSurfaceDescription.MeshRenderer.sharedMaterial = sharedMaterial;
 		}
 
 		public static HelperSurfaceDescription CreateHelperSurfaceDescription(GeneratedMeshes container, ModelSettingsFlags modelSettings, GeneratedMeshDescription meshDescription, RenderSurfaceType renderSurfaceType)
@@ -1472,6 +1530,8 @@ namespace InternalRealtimeCSG
 				RefreshModelCounter++;
 			else
 				RefreshModelCounter = 0;
+
+			UpdateHelperSurfaces();
 		}
 
 		private static void AssignLayerToChildren(GameObject gameObject)
@@ -1599,13 +1659,13 @@ namespace InternalRealtimeCSG
         static readonly List<GeneratedMeshInstance> s_foundMeshInstances = new List<GeneratedMeshInstance>();
 
 
-        public static void ValidateGeneratedMeshesNow(GeneratedMeshes generatedMeshes, bool skipSiblingCheck = false)
+        public static bool ValidateGeneratedMeshesNow(GeneratedMeshes generatedMeshes, bool skipSiblingCheck = false)
 		{
 			if (UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
-				return;
+				return false;
 
             if (!generatedMeshes)
-				return;
+				return true;
 
 			if (generatedMeshes.owner && generatedMeshes.gameObject)
 			{
@@ -1613,12 +1673,12 @@ namespace InternalRealtimeCSG
 				{
 					ValidateModelNow(generatedMeshes.owner, true);
 					if (!generatedMeshes)
-						return;
+						return true;
 				}
 			} else
 			{
                 GameObjectExtensions.Destroy(generatedMeshes.gameObject);
-				return;
+				return true;
 			}
 
             var generatedMeshesGameObject = generatedMeshes.gameObject;
@@ -1631,9 +1691,10 @@ namespace InternalRealtimeCSG
 				var meshInstance			= meshInstanceTransform.GetComponent<GeneratedMeshInstance>();
 				if (!meshInstance)
 				{
-                    if (meshInstanceTransform.gameObject)
+                    if (meshInstanceTransform.gameObject &&
+						meshInstanceTransform.hideFlags != HideFlags.DontSave)
                         GameObjectExtensions.Destroy(meshInstanceTransform.gameObject);
-					continue;
+                    continue;
 				}
 				var key = meshInstance.GenerateKey();
 				if (!generatedMeshes.HasMeshInstance(key))
@@ -1686,6 +1747,7 @@ namespace InternalRealtimeCSG
 				if (generatedMeshesTransform.parent != modelTransform)
 					generatedMeshesTransform.parent.SetParent(modelTransform, true);
 			}
+            return false;
 		}
 		
 		public static GeneratedMeshInstance[] GetAllModelMeshInstances(GeneratedMeshes container)
@@ -1710,7 +1772,10 @@ namespace InternalRealtimeCSG
 			var key = MeshInstanceKey.GenerateKey(meshDescription);
 			HelperSurfaceDescription instance = container.GetHelperSurface(key);
 			if (instance != null)
+			{
+				instance.RenderSurfaceType = renderSurfaceType;
 				return instance;
+			}
 
 			return CreateHelperSurfaceDescription(container, modelSettings, meshDescription, renderSurfaceType);
 		}
@@ -1776,8 +1841,7 @@ namespace InternalRealtimeCSG
 #region UpdateContainerComponents
 		static readonly List<GameObject> __notfoundGameObjects		= new List<GameObject>();
 		public static List<GameObject> FindUnusedMeshInstances(GeneratedMeshes                    container, 
-													           HashSet<GeneratedMeshInstance>     foundInstances,
-													           HashSet<HelperSurfaceDescription>  foundHelperSurfaces)
+													           HashSet<GeneratedMeshInstance>     foundInstances)
 		{
 			if (UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
                 return null;
@@ -1834,8 +1898,12 @@ namespace InternalRealtimeCSG
 			if (!container || !container.owner)
 				return;
 
-			if (!container.HasMeshInstances)
-				ValidateGeneratedMeshesNow(container);
+            if (!container.HasMeshInstances)
+            {
+                var prevModel = container ? container.owner : null;
+                if (ValidateGeneratedMeshesNow(container) && prevModel)
+                    prevModel.forceUpdate = true;
+            }
 
             var oldMeshes = new HashSet<Mesh>();
             foreach (var helperSurface in container.HelperSurfaces)
@@ -1923,27 +1991,35 @@ namespace InternalRealtimeCSG
 #endregion
 		
 #region UpdateContainerFlags
-		private static void UpdateContainerFlags(GeneratedMeshes container)
+		private static void UpdateContainerFlags(GeneratedMeshes generatedMeshes)
 		{
-			if (!container)
+			if (!generatedMeshes)
 				return;
-            if (container.owner)
-			{
-				var ownerTransform = container.owner.transform;
-				if (container.transform.parent != ownerTransform) 
-				{
-					container.transform.SetParent(ownerTransform, false);
-				}
+            if (generatedMeshes.owner)
+            {
+                if (CSGPrefabUtility.IsPrefabAsset(generatedMeshes.gameObject) ||
+                    CSGPrefabUtility.IsPrefabAsset(generatedMeshes.owner.gameObject))
+                    return;
 
-				if (!container)
-					return;
+                if (!CSGPrefabUtility.IsPrefabInstance(generatedMeshes.gameObject) &&
+                    !CSGPrefabUtility.IsPrefabInstance(generatedMeshes.owner.gameObject))
+                {
+                    var ownerTransform = generatedMeshes.owner.transform;
+                    if (generatedMeshes.transform.parent != ownerTransform)
+                    {
+                        generatedMeshes.transform.SetParent(ownerTransform, false);
+                    }
+
+                    if (!generatedMeshes)
+                        return;
+                }
 			}
 
 			//var isTrigger			= container.owner.IsTrigger;
 			//var collidable		= container.owner.HaveCollider || isTrigger;
-			var ownerGameObject     = container.owner.gameObject;
+			var ownerGameObject     = generatedMeshes.owner.gameObject;
             var ownerStaticFlags	= GameObjectUtility.GetStaticEditorFlags(ownerGameObject);
-			var previousStaticFlags	= GameObjectUtility.GetStaticEditorFlags(container.gameObject);
+			var previousStaticFlags	= GameObjectUtility.GetStaticEditorFlags(generatedMeshes.gameObject);
             
 			var containerLayer		= ownerGameObject.layer;
 			
@@ -1951,11 +2027,11 @@ namespace InternalRealtimeCSG
 
 
 			if (ownerStaticFlags != previousStaticFlags ||
-                !ownerGameObject.CompareTag(container.gameObject.tag) ||
-				containerLayer != container.gameObject.layer)
+                !ownerGameObject.CompareTag(generatedMeshes.gameObject.tag) ||
+				containerLayer != generatedMeshes.gameObject.layer)
             {
                 var containerTag = ownerGameObject.tag;
-                foreach (var meshInstance in container.MeshInstances)
+                foreach (var meshInstance in generatedMeshes.MeshInstances)
 				{
 					if (!meshInstance)
 						continue;
@@ -1979,8 +2055,8 @@ namespace InternalRealtimeCSG
 				}
             }
 
-			if (container.owner.NeedAutoUpdateRigidBody)
-				AutoUpdateRigidBody(container);
+			if (generatedMeshes.owner.NeedAutoUpdateRigidBody)
+				AutoUpdateRigidBody(generatedMeshes);
 		}
 #endregion
 	}

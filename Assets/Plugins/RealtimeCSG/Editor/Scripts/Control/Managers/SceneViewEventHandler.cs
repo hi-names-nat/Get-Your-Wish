@@ -19,7 +19,8 @@ namespace RealtimeCSG
 
 		internal static void OnScene(SceneView sceneView)
 		{
-			if (!RealtimeCSG.CSGSettings.EnableRealtimeCSG)
+            CSGSettings.RegisterSceneView(sceneView);
+            if (!RealtimeCSG.CSGSettings.EnableRealtimeCSG)
 				return;
 
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -50,7 +51,7 @@ namespace RealtimeCSG
 			EditModeManager.InitSceneGUI(sceneView);
 
 			if (Event.current.type == EventType.Repaint)
-				MeshInstanceManager.RenderHelperSurfaces(sceneView);
+				MeshInstanceManager.UpdateHelperSurfaces();
 
 			if (Event.current.type == EventType.Repaint)
 			{

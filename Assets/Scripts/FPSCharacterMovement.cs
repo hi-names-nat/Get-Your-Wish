@@ -41,10 +41,10 @@ public class FPSCharacterMovement : MonoBehaviour
     void Update()
     {
         MoveCamera();
-        movePlayer();
+        MovePlayer();
     }
 
-    void movePlayer()
+    void MovePlayer()
     {
         //moves the player 
         currentRotation.y += Input.GetAxis("Mouse X") * sensitivity;
@@ -52,7 +52,7 @@ public class FPSCharacterMovement : MonoBehaviour
         transform.rotation = Quaternion.Euler(0, currentRotation.y, 0);
         playerObject.transform.Translate(transform.worldToLocalMatrix.MultiplyVector(transform.forward) * Input.GetAxisRaw("Player1UD") * playerSpeed / 500);
         playerObject.transform.Translate(transform.worldToLocalMatrix.MultiplyVector(transform.right) * Input.GetAxisRaw("Player1LR") * playerSpeed / 500);
-        if (Input.GetButtonDown("Player1Jump") && isGrounded())
+        if (Input.GetButtonDown("Jump") && isGrounded())
         {
             playerObject.transform.GetComponent<Rigidbody>().AddForce(0, jumpHeight * 25, 0);
         }

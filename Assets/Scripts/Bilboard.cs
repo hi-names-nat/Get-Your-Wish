@@ -17,6 +17,6 @@ public class Bilboard : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //write if u have the time
+        transform.eulerAngles = new Vector3(0, player.transform.eulerAngles.y, 0);
     }
 }

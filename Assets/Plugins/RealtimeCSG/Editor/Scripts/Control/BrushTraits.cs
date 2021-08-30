@@ -1,12 +1,13 @@
-﻿using System;
+using System;
 using RealtimeCSG.Legacy;
 using RealtimeCSG.Components;
+using UnityEngine;
 
 namespace RealtimeCSG
 {
 	internal static class BrushTraits
 	{
-		public static bool IsSurfaceSelectable(CSGBrush brush, int surfaceIndex)
+		public static bool IsSurfaceUnselectable(CSGBrush brush, int surfaceIndex, bool isTrigger, bool ignoreSurfaceFlags = false)
 		{
 			if (!brush)
 			{
@@ -38,9 +39,30 @@ namespace RealtimeCSG
 				return true;
 			}
 
-			if ((texGenFlags[texGenIndex] & TexGenFlags.NoRender) == TexGenFlags.NoRender)
-				return !CSGSettings.ShowHiddenSurfaces;
+			if (ignoreSurfaceFlags)
+			{
+				var isNotRenderable = (texGenFlags[texGenIndex] & TexGenFlags.NoRender) == TexGenFlags.NoRender;
+				if (!isNotRenderable)
+					return false;
 
+				if (isNotRenderable && CSGSettings.ShowHiddenSurfaces)
+					return false;
+
+				var isCollidable = (texGenFlags[texGenIndex] & TexGenFlags.NoCollision) != TexGenFlags.NoCollision;
+				if (isCollidable)
+				{
+					if (isTrigger)
+					{
+						if (CSGSettings.ShowTriggerSurfaces)
+							return false;
+					} else
+					{
+						if (CSGSettings.ShowColliderSurfaces)
+							return false;
+					}
+				}
+				return true;
+			}			
 			return false;
 		}
 	}
