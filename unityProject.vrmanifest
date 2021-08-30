@@ -5,7 +5,7 @@
       "app_key": "application.generated.unity.getyourwish.exe",
       "launch_type": "url",
       "url": "steam://launch/",
-      "action_manifest_path": "C:\\Users\\jg380218\\Documents\\Unity\\Get-Your-Wish\\Assets\\StreamingAssets\\SteamVR\\actions.json",
+      "action_manifest_path": "C:\\Users\\ds006518\\Documents\\GitHub\\Get-Your-Wish\\Assets\\StreamingAssets\\SteamVR\\actions.json",
       "strings": {
         "en_us": {
           "name": "Get-Your-Wish [Testing]"
