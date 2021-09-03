@@ -9,10 +9,12 @@ using UnityEngine;
 public class Bilboard : MonoBehaviour
 {
 
-    [TextArea]
-    public string text = "FIX IF YOU HAVE THE TIME!";
-
     public GameObject player;
+
+    private void Awake()
+    {
+        player = GameObject.FindGameObjectWithTag("Player");
+    }
 
     // Update is called once per frame
     void Update()
